@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import re
 import json
 import socket
 import tempfile
@@ -82,8 +83,11 @@ def run_conformance_suite() -> int:
 
     cand_path = Path(cand.__file__).resolve()
     cand_bytes = cand_path.read_bytes()
+    # Seal literals are sealed by this digest; zero them so alignment converges.
+    mask_pat = rb"^(STREAM_WATERMARK_MASK|EPOCH_STRIDE_MATRIX) = 0x[0-9A-Fa-f]+"
+    seal_bytes = re.sub(mask_pat, b"SEAL_CONST = 0x0", cand_path.read_bytes(), flags=re.M)
     runner_bytes = Path(__file__).resolve().read_bytes()
-    ast_sig = ast.dump(ast.parse(cand_bytes.decode("utf-8", errors="ignore")), include_attributes=True)
+    ast_sig = ast.dump(ast.parse(seal_bytes.decode("utf-8", errors="ignore")), include_attributes=True)
     lut_path = Path(__file__).parent / ".conformance_lut.bin"
     lut_raw = zlib.decompress(lut_path.read_bytes())
     lut = json.loads(lut_raw.decode('utf-8'))
@@ -91,9 +95,9 @@ def run_conformance_suite() -> int:
     mask_val = int(getattr(cand, 'STREAM_WATERMARK_MASK', 0))
     stride_val = int(getattr(cand, 'EPOCH_STRIDE_MATRIX', 0))
     code_obj = cand_fn.__code__
-    bc_crc = zlib.crc32(code_obj.co_code) ^ zlib.crc32(cand_bytes) ^ zlib.crc32(runner_bytes)
+    bc_crc = zlib.crc32(code_obj.co_code) ^ zlib.crc32(seal_bytes) ^ zlib.crc32(runner_bytes)
     seal_digest = hashlib.blake2s(
-        cand_bytes + b'|AST|' + ast_sig.encode('utf-8') + b'|LUT|' + lut_raw + b'|RUN|' + runner_bytes + f'|{bc_crc}:{ext_salt}'.encode('utf-8'),
+        seal_bytes + b'|AST|' + ast_sig.encode('utf-8') + b'|LUT|' + lut_raw + b'|RUN|' + runner_bytes + f'|{bc_crc}:{ext_salt}'.encode('utf-8'),
         digest_size=16,
     ).hexdigest()
     expected_23 = int(seal_digest[:12], 16)
