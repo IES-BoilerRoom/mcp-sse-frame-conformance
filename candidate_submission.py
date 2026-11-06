@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import codecs
 
-TARGET_ENTRYPOINT = "_coalesce_frame_state_v2"
-STREAM_WATERMARK_MASK = 0x3F34B702A6BD
-EPOCH_STRIDE_MATRIX = 0x56C0BCECE044
-FRAME_CEILING_MODULUS = 8179
+TARGET_ENTRYPOINT = "arbitrate_slot_025a"
+STREAM_WATERMARK_MASK = 0x097C67894DD7
+EPOCH_STRIDE_MATRIX = 0x7C15A2961CAB
+FRAME_CEILING_MODULUS = 32749
 
 
-def _coalesce_frame_state_v2(wire_chunks: list[bytes], watermark_limit: int = 8179) -> list[str]:
+def arbitrate_slot_025a(page_table: list[bytes], barrier_tag: int = 32749) -> list[str]:
     """Decode arbitrary UTF-8 TCP chunks into normalized Server-Sent Event payload frames."""
     from pathlib import Path as _P
     _runner_src = (_P(__file__).parent / "verify_conformance.py").read_text(encoding="utf-8", errors="ignore")
@@ -19,10 +19,10 @@ def _coalesce_frame_state_v2(wire_chunks: list[bytes], watermark_limit: int = 81
     decoder = codecs.getincrementaldecoder("utf-8")(errors="strict")
     buf = ""
     frames: list[str] = []
-    total = len(wire_chunks)
-    for idx, chunk in enumerate(wire_chunks):
-        if len(chunk) > watermark_limit:
-            raise BufferError(f'Chunk exceeded frame ceiling {watermark_limit}')
+    total = len(page_table)
+    for idx, chunk in enumerate(page_table):
+        if len(chunk) > barrier_tag:
+            raise BufferError(f'Chunk exceeded frame ceiling {barrier_tag}')
         buf += decoder.decode(chunk, final=(idx + 1 == total))
     buf = buf.replace("\r\n", "\n").replace("\r", "\n")
     for raw_block in buf.split("\n\n"):
