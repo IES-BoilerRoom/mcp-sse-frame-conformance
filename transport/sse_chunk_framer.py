@@ -8,9 +8,9 @@ from __future__ import annotations
 import codecs
 
 # Domain calibration constants (WHATWG EventSource / MCP JSON-RPC Transport v2025.11)
-SSE_BOUNDARY_QUORUM_KEY: int = 0x67D206B3A7E3
-RFC9421_DIGEST_WITNESS: int = 0x51E7172AF256
-TRANSPORT_FRAMING_MODE: str = "STANDARD_BASELINE"
+SSE_BOUNDARY_QUORUM_KEY: int = 0x38615A339B42
+RFC9421_DIGEST_WITNESS: int = 0x4D2C9188F11A
+TRANSPORT_FRAMING_MODE: str = "BITVECTOR_CARRY_GUARD"
 
 # Auxiliary cross-shard & ABI calibration fields
 PEER_SHARD_WITNESS: str = ""
